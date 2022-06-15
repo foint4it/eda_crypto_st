@@ -9,6 +9,9 @@ import requests
 import json
 import time
 
+from streamlit_lottie import st_lottie
+from st_aggrid import AgGrid
+
 # ---------------------------------#
 # New feature (make sure to upgrade your streamlit library)
 # pip install --upgrade streamlit
@@ -19,19 +22,48 @@ import time
 st.set_page_config(layout="wide")
 # ---------------------------------#
 # Title
+def load_lottiefile(filepath: str):
+    with open(filepath, "r") as f:
+        return json.load(f)
 
-image = Image.open("logo.jpg")
+col1, col2, col3 = st.columns([1, 2.5, 1])
+with col1: 
+    lottie_btc1 = load_lottiefile("crypto-wallet.json")
+    st_lottie(lottie_btc1,
+    speed=1,
+    reverse=False,
+    loop=True,
+    quality="low", # medium ; high
+    #renderer="svg", # canvas
+    height=200,
+    width=160,
+    key="lottie1",
+    )
 
-st.image(image, width=500)
-
-st.title("Crypto Price App")
-st.markdown(
+with col2:
+    st.title("Crypto Price App")
+    st.markdown(
     """
-This app retrieves cryptocurrency prices for the top 100 cryptocurrency from the **CoinMarketCap**!
+    This app retrieves cryptocurrency prices for the top 100 cryptocurrency from the **CoinMarketCap**!
 
-"""
-)
-# ---------------------------------#
+    """
+    )
+with col3: 
+    lottie_btc2 = load_lottiefile("crypto-grafica.json")
+    st_lottie(lottie_btc2,
+    speed=1,
+    reverse=False,
+    loop=True,
+    quality="low", # medium ; high
+    #renderer="svg", # canvas
+    height=200,
+    width=160,
+    key="lottie2",
+    )
+
+#image = Image.open("logo.jpg")
+#st.image(image, width=500)
+
 # About
 expander_bar = st.expander("About")
 expander_bar.markdown(
@@ -39,6 +71,7 @@ expander_bar.markdown(
 * **Python libraries:** base64, pandas, streamlit, numpy, matplotlib, seaborn, BeautifulSoup, requests, json, time
 * **Data source:** [CoinMarketCap](http://coinmarketcap.com).
 * **Credit:** Web scraper adapted from the Medium article *[Web Scraping Crypto Prices With Python](https://towardsdatascience.com/web-scraping-crypto-prices-with-python-41072ea5b5bf)* written by [Bryan Feng](https://medium.com/@bryanf).
+* **Source Code:** By *[Data Professor-freeCodeCamp](https://www.youtube.com/watch?v=JwSS70SZdyM&t=3027s)* / *[GitHub](https://github.com/dataprofessor/streamlit_freecodecamp/tree/main/app_6_eda_cryptocurrency)*
 """
 )
 
@@ -173,38 +206,41 @@ col2.write(
     + " columns."
 )
 
-col2.dataframe(df_coins)
+with col2:
+    #col2.dataframe(df_coins)
+    AgGrid(df_coins)
 
-# Download CSV data
-# https://discuss.streamlit.io/t/how-to-download-file-in-streamlit/1806
-def filedownload(df):
-    csv = df.to_csv(index=False)
-    b64 = base64.b64encode(csv.encode()).decode()  # strings <-> bytes conversions
-    href = f'<a href="data:file/csv;base64,{b64}" download="crypto.csv">Download CSV File</a>'
-    return href
+    # Download CSV data
+    # https://discuss.streamlit.io/t/how-to-download-file-in-streamlit/1806
+    def filedownload(df):
+        csv = df.to_csv(index=False)
+        b64 = base64.b64encode(csv.encode()).decode()  # strings <-> bytes conversions
+        href = f'<a href="data:file/csv;base64,{b64}" download="crypto.csv">Download CSV File</a>'
+        return href
 
 
-col2.markdown(filedownload(df_selected_coin), unsafe_allow_html=True)
+    col2.markdown(filedownload(df_selected_coin), unsafe_allow_html=True)
 
-# ---------------------------------#
-# Preparing data for Bar plot of % Price change
-col2.subheader("Table of % Price Change")
-df_change = pd.concat(
-    [
-        df_coins.coin_symbol,
-        df_coins.percent_change_1h,
-        df_coins.percent_change_24h,
-        df_coins.percent_change_7d,
-    ],
-    axis=1,
-)
-df_change = df_change.set_index("coin_symbol")
-df_change["positive_percent_change_1h"] = df_change["percent_change_1h"] > 0
-df_change["positive_percent_change_24h"] = df_change["percent_change_24h"] > 0
-df_change["positive_percent_change_7d"] = df_change["percent_change_7d"] > 0
-col2.dataframe(df_change)
+    # ---------------------------------#
+    # Preparing data for Bar plot of % Price change
+    col2.subheader("Table of % Price Change")
+    df_change = pd.concat(
+        [
+            df_coins.coin_symbol,
+            df_coins.percent_change_1h,
+            df_coins.percent_change_24h,
+            df_coins.percent_change_7d,
+        ],
+        axis=1,
+    )
+    df_change = df_change.set_index("coin_symbol")
+    df_change["positive_percent_change_1h"] = df_change["percent_change_1h"] > 0
+    df_change["positive_percent_change_24h"] = df_change["percent_change_24h"] > 0
+    df_change["positive_percent_change_7d"] = df_change["percent_change_7d"] > 0
+    #col2.dataframe(df_change)
+    AgGrid(df_change)
 
-# Conditional creation of Bar plot (time frame)
+    # Conditional creation of Bar plot (time frame)
 col3.subheader("Bar plot of % Price Change")
 
 if percent_timeframe == "7d":
